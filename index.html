@@ -241,15 +241,35 @@
 const TITLE_KEYWORDS = ['partner','director','principal','president','chairman','chairwoman','chairperson',
   'chief','officer','ceo','cfo','coo','cio','cto','managing','founder','co-founder','vice president','vp',
   'associate','analyst','advisor','adviser','counsel','general counsel','head of','senior','executive',
-  'investment','operating','portfolio','treasurer','secretary','board','member','consultant','fellow'];
+  'investment','operating','portfolio','treasurer','secretary','board member','consultant','fellow'];
+
+// Phrases that match the "Title Case, 2-4 words" name pattern but are almost
+// never actual people — nav items, CTAs, legal boilerplate, section headers.
+const NAME_STOPLIST = new Set([
+  'contact us','about us','our team','meet the team','our people','our story','privacy policy',
+  'terms of service','terms of use','cookie policy','cookie settings','read more','learn more',
+  'view all','view more','get started','sign up','subscribe now','all rights reserved','site map',
+  'sitemap','skip to content','back to top','our firm','our approach','our values','our mission',
+  'our history','our culture','our portfolio','our investments','case studies','press releases',
+  'in the news','contact info','quick links','follow us','social media','site by','powered by',
+  'menu close','open menu','close menu','search site','our leadership','leadership team',
+  'investment team','our offices','board of directors','our partners'
+]);
+
+const NAV_ANCESTOR_SELECTOR = 'nav, header, footer, [class*="nav" i], [id*="nav" i], [class*="menu" i], ' +
+  '[id*="menu" i], [class*="footer" i], [id*="footer" i], [class*="header" i], [id*="header" i], ' +
+  '[class*="breadcrumb" i], [class*="cookie" i], [class*="social" i], [role="navigation"]';
 
 function isNameLine(s){
   if(!s) return false;
   s = s.trim();
   if(s.length < 4 || s.length > 45) return false;
   if(/\d/.test(s)) return false;
+  if(NAME_STOPLIST.has(s.toLowerCase())) return false;
   const words = s.split(/\s+/);
   if(words.length < 2 || words.length > 4) return false;
+  const lower = s.toLowerCase();
+  if(/\b(click|menu|search|login|log in|sign in|subscribe|newsletter|cookies?|policy|terms|copyright)\b/.test(lower)) return false;
   return words.every(w => /^[A-Z][a-zA-Z.'\-]*$/.test(w) || /^[A-Z]\.$/.test(w));
 }
 function isTitleLine(s){
@@ -263,6 +283,7 @@ function isTitleLine(s){
 function extractRoster(htmlText){
   const doc = new DOMParser().parseFromString(htmlText, 'text/html');
   doc.querySelectorAll('script,style,noscript').forEach(n => n.remove());
+  doc.querySelectorAll(NAV_ANCESTOR_SELECTOR).forEach(n => n.remove());
 
   const lines = [];
   const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_ELEMENT);
@@ -281,16 +302,17 @@ function extractRoster(htmlText){
   const roster = new Map();
   for(let i=0; i<lines.length; i++){
     if(isNameLine(lines[i])){
-      for(let j=i+1; j<Math.min(i+4, lines.length); j++){
+      let foundTitle = null;
+      for(let j=i+1; j<Math.min(i+3, lines.length); j++){
         if(isNameLine(lines[j])) break;
         if(isTitleLine(lines[j])){
-          const name = lines[i].trim();
-          if(!roster.has(name)) roster.set(name, lines[j].trim());
+          foundTitle = lines[j].trim();
           break;
         }
       }
-      if(!roster.has(lines[i].trim())){
-        roster.set(lines[i].trim(), '(title not detected)');
+      if(foundTitle){
+        const name = lines[i].trim();
+        if(!roster.has(name)) roster.set(name, foundTitle);
       }
     }
   }
