@@ -231,7 +231,7 @@
       </div>
     </div>
     <div class="footnote">
-      Name/title extraction is heuristic — it looks for Title-Case name lines followed by a recognizable job-title line (e.g. <code>Partner</code>, <code>Managing Director</code>, <code>Principal</code>). Pages with unusual layouts may need manual review. Snapshots that fail to load (CORS or archive gaps) are skipped and logged.
+      Name/title extraction looks for repeated DOM card structure first (one card per person), then falls back to a flat text heuristic if no consistent card layout is detected. Pages with unusual layouts may need manual review. Snapshots that fail to load (CORS or archive gaps) are skipped and logged.
     </div>
   </div>
 
@@ -243,8 +243,6 @@ const TITLE_KEYWORDS = ['partner','director','principal','president','chairman',
   'associate','analyst','advisor','adviser','counsel','general counsel','head of','senior','executive',
   'investment','operating','portfolio','treasurer','secretary','board member','consultant','fellow'];
 
-// Phrases that match the "Title Case, 2-4 words" name pattern but are almost
-// never actual people — nav items, CTAs, legal boilerplate, section headers.
 const NAME_STOPLIST = new Set([
   'contact us','about us','our team','meet the team','our people','our story','privacy policy',
   'terms of service','terms of use','cookie policy','cookie settings','read more','learn more',
@@ -280,25 +278,93 @@ function isTitleLine(s){
   return TITLE_KEYWORDS.some(k => lower.includes(k));
 }
 
-function extractRoster(htmlText){
-  const doc = new DOMParser().parseFromString(htmlText, 'text/html');
-  doc.querySelectorAll('script,style,noscript').forEach(n => n.remove());
-  doc.querySelectorAll(NAV_ANCESTOR_SELECTOR).forEach(n => n.remove());
-
+function extractLines(rootEl){
   const lines = [];
-  const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_ELEMENT);
-  const seen = new Set();
-  let node;
-  while(node = walker.nextNode()){
-    const hasElementChild = Array.from(node.children).some(c => c.textContent.trim().length > 0);
-    if(hasElementChild) continue;
-    const txt = node.textContent.replace(/\s+/g,' ').trim();
-    if(!txt) continue;
-    if(seen.has(node)) continue;
-    seen.add(node);
-    lines.push(txt);
-  }
+  const visit = (n) => {
+    const hasElementChild = Array.from(n.children).some(c => c.textContent.trim().length > 0);
+    if(hasElementChild) return;
+    const txt = n.textContent.replace(/\s+/g,' ').trim();
+    if(txt) lines.push(txt);
+  };
+  const all = rootEl.querySelectorAll('*');
+  if(all.length === 0){ visit(rootEl); return lines; }
+  all.forEach(visit);
+  return lines;
+}
 
+const JUNK_TITLE_STOPLIST = new Set([
+  'view bio','read bio','read more','view more','full bio','view full bio','view profile',
+  'linkedin','email','contact','close','share','print','connect','view less','bio','profile'
+]);
+
+function isJunkTitleLine(s){
+  if(!s) return true;
+  const lower = s.trim().toLowerCase();
+  if(JUNK_TITLE_STOPLIST.has(lower)) return true;
+  if(lower.length < 2) return true;
+  if(/^(in|at|@|www\.|http)/.test(lower)) return true;
+  return false;
+}
+
+function detectCardGroups(doc){
+  const root = doc.body || doc;
+  const all = root.querySelectorAll('*');
+  const parentMap = new Map();
+
+  all.forEach(el => {
+    if(typeof el.className !== 'string') return;
+    const cls = el.className.trim();
+    if(!cls) return;
+    const parent = el.parentElement;
+    if(!parent) return;
+    const sig = el.tagName + ':' + cls;
+    if(!parentMap.has(parent)) parentMap.set(parent, new Map());
+    const sigMap = parentMap.get(parent);
+    if(!sigMap.has(sig)) sigMap.set(sig, []);
+    sigMap.get(sig).push(el);
+  });
+
+  const groups = [];
+  parentMap.forEach(sigMap => {
+    sigMap.forEach(elements => {
+      if(elements.length >= 3 && elements.length <= 250){
+        groups.push(elements);
+      }
+    });
+  });
+  return groups;
+}
+
+function extractFromCardGroup(elements){
+  const roster = new Map();
+  let hitCount = 0;
+  elements.forEach(card => {
+    const lines = extractLines(card);
+    let name = null, title = null;
+    for(let i=0; i<lines.length; i++){
+      if(isNameLine(lines[i])){
+        name = lines[i].trim();
+        for(let j=i+1; j<lines.length; j++){
+          if(isNameLine(lines[j])) break;
+          if(!isJunkTitleLine(lines[j])){
+            title = lines[j].trim();
+            break;
+          }
+        }
+        break;
+      }
+    }
+    if(name){
+      hitCount++;
+      if(!roster.has(name)) roster.set(name, title || '(title not detected)');
+    }
+  });
+  if(hitCount < 2) return new Map();
+  return roster;
+}
+
+function extractRosterFlatFallback(doc){
+  const lines = extractLines(doc.body || doc);
   const roster = new Map();
   for(let i=0; i<lines.length; i++){
     if(isNameLine(lines[i])){
@@ -317,6 +383,25 @@ function extractRoster(htmlText){
     }
   }
   return roster;
+}
+
+function extractRoster(htmlText){
+  const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+  doc.querySelectorAll('script,style,noscript').forEach(n => n.remove());
+  doc.querySelectorAll(NAV_ANCESTOR_SELECTOR).forEach(n => n.remove());
+
+  const cardGroups = detectCardGroups(doc);
+  cardGroups.sort((a,b) => b.length - a.length);
+
+  const merged = new Map();
+  for(const group of cardGroups){
+    const found = extractFromCardGroup(group);
+    found.forEach((title, name) => { if(!merged.has(name)) merged.set(name, title); });
+  }
+
+  if(merged.size > 0) return merged;
+
+  return extractRosterFlatFallback(doc);
 }
 
 function monthsBetween(from, to){
