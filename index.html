@@ -1,6 +1,3 @@
-Here's the full code — select all, copy, then paste over the existing content in GitHub's editor (select-all in the editor box first so it replaces rather than appends):
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -217,6 +214,7 @@ Here's the full code — select all, copy, then paste over the existing content 
       </div>
     </div>
     <button class="primary" id="runBtn">Fetch snapshots &amp; build timeline</button>
+    <button class="ghost" id="checkBtn" style="margin-top:18px; margin-left:10px;">Run connectivity check</button>
     <div class="log" id="log"></div>
   </div>
 
@@ -336,24 +334,52 @@ function clearLog(){
   log.classList.remove('visible');
 }
 
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+const CORS_PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+];
 
-async function describeFetchError(e, urlAttempted){
+async function describeFetchError(urlAttempted){
   if(location.protocol === 'file:'){
     return `Network request blocked. This page was opened as a local file (file://), and some browsers refuse to let local files make network requests at all. Try one of: (1) open this file via a local server instead of double-clicking it, or (2) host it (e.g. GitHub Pages) and open the https:// link.`;
   }
-  return `Direct request to ${urlAttempted} was blocked (likely missing CORS headers on their end), and the CORS-proxy fallback also failed. This can mean: the proxy service is temporarily down/rate-limited, an extension is blocking it, or there's no internet connection. Try again in a moment, or try a different browser/network.`;
+  return `Request to ${urlAttempted} failed directly and through every CORS-proxy fallback. Click "Run connectivity check" below to see exactly which endpoints are reachable from this network/browser — that will tell us whether this is a network block or something else.`;
 }
 
 async function fetchWithCorsFallback(url){
   try{
     const res = await fetch(url, { mode: 'cors' });
     if(res.ok) return res;
-  } catch(e){
-    // direct fetch threw — try proxy below
+  } catch(e){ /* try proxies below */ }
+
+  for(const buildProxyUrl of CORS_PROXIES){
+    try{
+      const res = await fetch(buildProxyUrl(url));
+      if(res.ok) return res;
+    } catch(e){ /* try next proxy */ }
   }
-  const proxied = await fetch(CORS_PROXY + encodeURIComponent(url));
-  return proxied;
+  throw new Error('all endpoints failed');
+}
+
+async function runConnectivityCheck(){
+  const targets = [
+    { label: 'web.archive.org (direct)', url: 'https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json' },
+    { label: 'allorigins.win proxy', url: CORS_PROXIES[0]('https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json') },
+    { label: 'corsproxy.io proxy', url: CORS_PROXIES[1]('https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json') },
+    { label: 'thingproxy proxy', url: CORS_PROXIES[2]('https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json') },
+    { label: 'a generic public API (httpbin)', url: 'https://httpbin.org/get' },
+  ];
+  logLine('Running connectivity check…');
+  for(const t of targets){
+    try{
+      const res = await fetch(t.url);
+      logLine(`${t.label}: reachable (HTTP ${res.status})`, res.ok ? 'ok' : 'err');
+    } catch(e){
+      logLine(`${t.label}: blocked — ${e.message}`, 'err');
+    }
+  }
+  logLine('Connectivity check complete.');
 }
 
 async function fetchCdx(url, fromStr, toStr){
@@ -364,7 +390,7 @@ async function fetchCdx(url, fromStr, toStr){
   try{
     res = await fetchWithCorsFallback(cdxUrl);
   } catch(e){
-    throw new Error(await describeFetchError(e, 'web.archive.org (CDX index)'));
+    throw new Error(await describeFetchError('web.archive.org (CDX index)'));
   }
   if(!res.ok) throw new Error('CDX query reached the server but returned HTTP ' + res.status + ' — the archive may be rate-limiting or the URL may be malformed.');
   const data = await res.json();
@@ -399,7 +425,7 @@ async function fetchSnapshotHtml(timestamp, original){
   try{
     res = await fetchWithCorsFallback(archUrl);
   } catch(e){
-    throw new Error(await describeFetchError(e, 'web.archive.org (snapshot)'));
+    throw new Error(await describeFetchError('web.archive.org (snapshot)'));
   }
   if(!res.ok) throw new Error('HTTP ' + res.status);
   return await res.text();
@@ -520,6 +546,11 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   XLSX.writeFile(wb, 'team-roster-changes.xlsx');
 });
 
+document.getElementById('checkBtn').addEventListener('click', async () => {
+  clearLog();
+  await runConnectivityCheck();
+});
+
 document.getElementById('runBtn').addEventListener('click', async () => {
   const url = document.getElementById('targetUrl').value.trim();
   const fromStr = document.getElementById('dateFrom').value;
@@ -591,4 +622,3 @@ document.getElementById('runBtn').addEventListener('click', async () => {
 
 </body>
 </html>
-```
