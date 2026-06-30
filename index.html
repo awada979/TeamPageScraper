@@ -335,49 +335,63 @@ function clearLog(){
 }
 
 const CORS_PROXIES = [
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-  url => `https://thingproxy.freeboard.io/fetch/${url}`,
+  { label: 'allorigins.win', build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
+  { label: 'corsproxy.io', build: url => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
+  { label: 'thingproxy', build: url => `https://thingproxy.freeboard.io/fetch/${url}` },
 ];
 
-async function describeFetchError(urlAttempted){
-  if(location.protocol === 'file:'){
-    return `Network request blocked. This page was opened as a local file (file://), and some browsers refuse to let local files make network requests at all. Try one of: (1) open this file via a local server instead of double-clicking it, or (2) host it (e.g. GitHub Pages) and open the https:// link.`;
-  }
-  return `Request to ${urlAttempted} failed directly and through every CORS-proxy fallback. Click "Run connectivity check" below to see exactly which endpoints are reachable from this network/browser — that will tell us whether this is a network block or something else.`;
+function fetchWithTimeout(url, ms){
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(t));
 }
 
-async function fetchWithCorsFallback(url){
-  try{
-    const res = await fetch(url, { mode: 'cors' });
-    if(res.ok) return res;
-  } catch(e){ /* try proxies below */ }
+async function fetchWithCorsFallback(url, onAttempt){
+  const attempts = [];
 
-  for(const buildProxyUrl of CORS_PROXIES){
-    try{
-      const res = await fetch(buildProxyUrl(url));
-      if(res.ok) return res;
-    } catch(e){ /* try next proxy */ }
+  try{
+    const res = await fetchWithTimeout(url, 12000);
+    attempts.push({ label: 'direct', status: res.status, ok: res.ok });
+    if(onAttempt) onAttempt(attempts[attempts.length-1]);
+    if(res.ok) return res;
+  } catch(e){
+    attempts.push({ label: 'direct', error: e.message });
+    if(onAttempt) onAttempt(attempts[attempts.length-1]);
   }
-  throw new Error('all endpoints failed');
+
+  for(const proxy of CORS_PROXIES){
+    try{
+      const res = await fetchWithTimeout(proxy.build(url), 15000);
+      attempts.push({ label: proxy.label, status: res.status, ok: res.ok });
+      if(onAttempt) onAttempt(attempts[attempts.length-1]);
+      if(res.ok) return res;
+    } catch(e){
+      attempts.push({ label: proxy.label, error: e.message });
+      if(onAttempt) onAttempt(attempts[attempts.length-1]);
+    }
+  }
+
+  const summary = attempts.map(a => a.error ? `${a.label}: ${a.error}` : `${a.label}: HTTP ${a.status}`).join(' | ');
+  throw new Error(`Every route failed — ${summary}`);
 }
 
 async function runConnectivityCheck(){
-  const targets = [
-    { label: 'web.archive.org (direct)', url: 'https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json' },
-    { label: 'allorigins.win proxy', url: CORS_PROXIES[0]('https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json') },
-    { label: 'corsproxy.io proxy', url: CORS_PROXIES[1]('https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json') },
-    { label: 'thingproxy proxy', url: CORS_PROXIES[2]('https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json') },
-    { label: 'a generic public API (httpbin)', url: 'https://httpbin.org/get' },
-  ];
+  const probeUrl = 'https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json';
   logLine('Running connectivity check…');
-  for(const t of targets){
-    try{
-      const res = await fetch(t.url);
-      logLine(`${t.label}: reachable (HTTP ${res.status})`, res.ok ? 'ok' : 'err');
-    } catch(e){
-      logLine(`${t.label}: blocked — ${e.message}`, 'err');
-    }
+  try{
+    await fetchWithCorsFallback(probeUrl, (a) => {
+      if(a.error) logLine(`${a.label}: blocked — ${a.error}`, 'err');
+      else logLine(`${a.label}: HTTP ${a.status}${a.ok ? ' (success)' : ''}`, a.ok ? 'ok' : 'err');
+    });
+    logLine('At least one route works — the tracker should run.', 'ok');
+  } catch(e){
+    logLine(e.message, 'err');
+  }
+  try{
+    const res = await fetchWithTimeout('https://httpbin.org/get', 8000);
+    logLine(`unrelated public API (httpbin): HTTP ${res.status}`, res.ok ? 'ok' : 'err');
+  } catch(e){
+    logLine(`unrelated public API (httpbin): blocked — ${e.message}`, 'err');
   }
   logLine('Connectivity check complete.');
 }
@@ -385,14 +399,11 @@ async function runConnectivityCheck(){
 async function fetchCdx(url, fromStr, toStr){
   const from = fromStr.replace('-','') + '01';
   const to = toStr ? toStr.replace('-','') + '28' : '';
-  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&filter=statuscode:200&collapse=timestamp:8&fl=timestamp,original&from=${from}${to ? '&to='+to : ''}`;
-  let res;
-  try{
-    res = await fetchWithCorsFallback(cdxUrl);
-  } catch(e){
-    throw new Error(await describeFetchError('web.archive.org (CDX index)'));
-  }
-  if(!res.ok) throw new Error('CDX query reached the server but returned HTTP ' + res.status + ' — the archive may be rate-limiting or the URL may be malformed.');
+  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&filter=statuscode:200&collapse=timestamp:8&fl=timestamp,original&limit=2000&from=${from}${to ? '&to='+to : ''}`;
+  const res = await fetchWithCorsFallback(cdxUrl, (a) => {
+    if(a.error) logLine(`  CDX via ${a.label}: ${a.error}`, 'err');
+    else logLine(`  CDX via ${a.label}: HTTP ${a.status}`, a.ok ? 'ok' : 'err');
+  });
   const data = await res.json();
   if(!data || data.length < 2) return [];
   const rows = data.slice(1);
@@ -421,13 +432,7 @@ function pickClosestSnapshots(snapshots, targetDates, toleranceDays){
 
 async function fetchSnapshotHtml(timestamp, original){
   const archUrl = `https://web.archive.org/web/${timestamp}id_/${original}`;
-  let res;
-  try{
-    res = await fetchWithCorsFallback(archUrl);
-  } catch(e){
-    throw new Error(await describeFetchError('web.archive.org (snapshot)'));
-  }
-  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const res = await fetchWithCorsFallback(archUrl);
   return await res.text();
 }
 
