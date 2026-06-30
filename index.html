@@ -231,7 +231,7 @@
       </div>
     </div>
     <div class="footnote">
-      Name/title extraction looks for repeated DOM card structure first (one card per person), then falls back to a flat text heuristic if no consistent card layout is detected. Pages with unusual layouts may need manual review. Snapshots that fail to load (CORS or archive gaps) are skipped and logged.
+      Name/title extraction looks for repeated DOM card structure first (one card per person), validates each candidate group against a real job-title hit rate, then falls back to a flat text heuristic if no consistent card layout is detected. Pages with unusual layouts may need manual review. Snapshots that fail to load (CORS or archive gaps) are skipped and logged.
     </div>
   </div>
 
@@ -241,7 +241,8 @@
 const TITLE_KEYWORDS = ['partner','director','principal','president','chairman','chairwoman','chairperson',
   'chief','officer','ceo','cfo','coo','cio','cto','managing','founder','co-founder','vice president','vp',
   'associate','analyst','advisor','adviser','counsel','general counsel','head of','senior','executive',
-  'investment','operating','portfolio','treasurer','secretary','board member','consultant','fellow'];
+  'investment','operating','portfolio manager','treasurer','secretary','board member','consultant','fellow',
+  'accountant','manager','administrator','controller','coordinator','specialist','vice','staff'];
 
 const NAME_STOPLIST = new Set([
   'contact us','about us','our team','meet the team','our people','our story','privacy policy',
@@ -258,24 +259,26 @@ const NAV_ANCESTOR_SELECTOR = 'nav, header, footer, [class*="nav" i], [id*="nav"
   '[id*="menu" i], [class*="footer" i], [id*="footer" i], [class*="header" i], [id*="header" i], ' +
   '[class*="breadcrumb" i], [class*="cookie" i], [class*="social" i], [role="navigation"]';
 
-function isNameLine(s){
-  if(!s) return false;
-  s = s.trim();
-  if(s.length < 4 || s.length > 45) return false;
-  if(/\d/.test(s)) return false;
-  if(NAME_STOPLIST.has(s.toLowerCase())) return false;
-  const words = s.split(/\s+/);
-  if(words.length < 2 || words.length > 4) return false;
-  const lower = s.toLowerCase();
-  if(/\b(click|menu|search|login|log in|sign in|subscribe|newsletter|cookies?|policy|terms|copyright)\b/.test(lower)) return false;
-  return words.every(w => /^[A-Z][a-zA-Z.'\-]*$/.test(w) || /^[A-Z]\.$/.test(w));
-}
 function isTitleLine(s){
   if(!s) return false;
   s = s.trim();
   if(s.length < 3 || s.length > 70) return false;
   const lower = s.toLowerCase();
   return TITLE_KEYWORDS.some(k => lower.includes(k));
+}
+
+function isNameLine(s){
+  if(!s) return false;
+  s = s.trim();
+  if(s.length < 4 || s.length > 45) return false;
+  if(/\d/.test(s)) return false;
+  if(NAME_STOPLIST.has(s.toLowerCase())) return false;
+  if(isTitleLine(s)) return false;
+  const words = s.split(/\s+/);
+  if(words.length < 2 || words.length > 4) return false;
+  const lower = s.toLowerCase();
+  if(/\b(click|menu|search|login|log in|sign in|subscribe|newsletter|cookies?|policy|terms|copyright)\b/.test(lower)) return false;
+  return words.every(w => /^[A-Z][a-zA-Z.'\-]*$/.test(w) || /^[A-Z]\.$/.test(w));
 }
 
 function extractLines(rootEl){
@@ -338,6 +341,7 @@ function detectCardGroups(doc){
 function extractFromCardGroup(elements){
   const roster = new Map();
   let hitCount = 0;
+  let recognizedTitleHits = 0;
   elements.forEach(card => {
     const lines = extractLines(card);
     let name = null, title = null;
@@ -347,7 +351,7 @@ function extractFromCardGroup(elements){
         for(let j=i+1; j<lines.length; j++){
           if(isNameLine(lines[j])) break;
           if(!isJunkTitleLine(lines[j])){
-            title = lines[j].trim();
+            title = lines[j].trim().replace(/,\s*$/, '');
             break;
           }
         }
@@ -356,10 +360,12 @@ function extractFromCardGroup(elements){
     }
     if(name){
       hitCount++;
+      if(title && isTitleLine(title)) recognizedTitleHits++;
       if(!roster.has(name)) roster.set(name, title || '(title not detected)');
     }
   });
   if(hitCount < 2) return new Map();
+  if(recognizedTitleHits / hitCount < 0.4) return new Map();
   return roster;
 }
 
