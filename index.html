@@ -1,3 +1,6 @@
+Here's the full code — select all, copy, then paste over the existing content in GitHub's editor (select-all in the editor box first so it replaces rather than appends):
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -263,7 +266,6 @@ function extractRoster(htmlText){
   const doc = new DOMParser().parseFromString(htmlText, 'text/html');
   doc.querySelectorAll('script,style,noscript').forEach(n => n.remove());
 
-  // collect text from leaf-ish elements in document order
   const lines = [];
   const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_ELEMENT);
   const seen = new Set();
@@ -278,12 +280,11 @@ function extractRoster(htmlText){
     lines.push(txt);
   }
 
-  const roster = new Map(); // name -> title
+  const roster = new Map();
   for(let i=0; i<lines.length; i++){
     if(isNameLine(lines[i])){
-      // look ahead a few lines for a title
       for(let j=i+1; j<Math.min(i+4, lines.length); j++){
-        if(isNameLine(lines[j])) break; // hit next name first, no title found
+        if(isNameLine(lines[j])) break;
         if(isTitleLine(lines[j])){
           const name = lines[i].trim();
           if(!roster.has(name)) roster.set(name, lines[j].trim());
@@ -317,7 +318,6 @@ function buildTargetDates(fromStr, toStr, freqMonths){
 }
 
 function cdxTimestampToDate(ts){
-  // YYYYMMDDhhmmss
   return new Date(`${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}T${ts.slice(8,10)||'00'}:${ts.slice(10,12)||'00'}:00Z`);
 }
 
@@ -336,13 +336,24 @@ function clearLog(){
   log.classList.remove('visible');
 }
 
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
 async function describeFetchError(e, urlAttempted){
-  // "Failed to fetch" from the browser gives no further detail by spec (for security/CORS reasons).
-  // Try to narrow down the cause with a couple of cheap follow-up checks.
   if(location.protocol === 'file:'){
-    return `Network request blocked. This page was opened as a local file (file://), and some browsers refuse to let local files make network requests at all. Try one of: (1) open this file via a local server instead of double-clicking it — e.g. run "npx serve ." in its folder and open the http://localhost link, or (2) drag the file into a new browser tab's address bar after first visiting any https:// page in that tab, or (3) check for a browser flag/extension blocking file:// network access.`;
+    return `Network request blocked. This page was opened as a local file (file://), and some browsers refuse to let local files make network requests at all. Try one of: (1) open this file via a local server instead of double-clicking it, or (2) host it (e.g. GitHub Pages) and open the https:// link.`;
   }
-  return `Network request to ${urlAttempted} failed before a response came back. This is almost always one of: an ad blocker / privacy extension blocking archive.org, no internet connection, or a browser CORS policy rejecting the request. Try disabling extensions for this page, or open this file in a different browser, and try again.`;
+  return `Direct request to ${urlAttempted} was blocked (likely missing CORS headers on their end), and the CORS-proxy fallback also failed. This can mean: the proxy service is temporarily down/rate-limited, an extension is blocking it, or there's no internet connection. Try again in a moment, or try a different browser/network.`;
+}
+
+async function fetchWithCorsFallback(url){
+  try{
+    const res = await fetch(url, { mode: 'cors' });
+    if(res.ok) return res;
+  } catch(e){
+    // direct fetch threw — try proxy below
+  }
+  const proxied = await fetch(CORS_PROXY + encodeURIComponent(url));
+  return proxied;
 }
 
 async function fetchCdx(url, fromStr, toStr){
@@ -351,14 +362,14 @@ async function fetchCdx(url, fromStr, toStr){
   const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&filter=statuscode:200&collapse=timestamp:8&fl=timestamp,original&from=${from}${to ? '&to='+to : ''}`;
   let res;
   try{
-    res = await fetch(cdxUrl, { mode: 'cors' });
+    res = await fetchWithCorsFallback(cdxUrl);
   } catch(e){
     throw new Error(await describeFetchError(e, 'web.archive.org (CDX index)'));
   }
   if(!res.ok) throw new Error('CDX query reached the server but returned HTTP ' + res.status + ' — the archive may be rate-limiting or the URL may be malformed.');
   const data = await res.json();
   if(!data || data.length < 2) return [];
-  const rows = data.slice(1); // first row is header
+  const rows = data.slice(1);
   return rows.map(r => ({ timestamp: r[0], original: r[1], date: cdxTimestampToDate(r[0]) }));
 }
 
@@ -386,7 +397,7 @@ async function fetchSnapshotHtml(timestamp, original){
   const archUrl = `https://web.archive.org/web/${timestamp}id_/${original}`;
   let res;
   try{
-    res = await fetch(archUrl, { mode: 'cors' });
+    res = await fetchWithCorsFallback(archUrl);
   } catch(e){
     throw new Error(await describeFetchError(e, 'web.archive.org (snapshot)'));
   }
@@ -580,3 +591,4 @@ document.getElementById('runBtn').addEventListener('click', async () => {
 
 </body>
 </html>
+```
