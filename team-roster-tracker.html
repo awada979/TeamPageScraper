@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Roster Trace — Team Page Change Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --ink:#0e1410;
+    --panel:#161f1a;
+    --panel-raised:#1c271f;
+    --hair:#2c3a31;
+    --parchment:#e4ddc9;
+    --parchment-dim:#9aa39a;
+    --teal:#74ad94;
+    --rust:#c2674b;
+    --gold:#d8b75b;
+    --display: 'Fraunces', serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--parchment);
+    font-family:var(--mono);
+    font-size:13px;
+    line-height:1.5;
+  }
+  .scanline{
+    position:fixed; top:0; left:0; width:100%; height:2px;
+    background:linear-gradient(90deg, transparent, var(--teal), transparent);
+    opacity:0; pointer-events:none; z-index:50;
+  }
+  .scanline.active{ animation: scan 1.6s linear infinite; opacity:0.7; }
+  @keyframes scan{ 0%{top:0;} 100%{top:100%;} }
+
+  header{
+    padding:36px 48px 28px;
+    border-bottom:1px solid var(--hair);
+  }
+  .eyebrow{
+    font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--teal); margin-bottom:10px;
+  }
+  h1{
+    font-family:var(--display);
+    font-optical-sizing:auto;
+    font-weight:500;
+    font-size:32px;
+    margin:0 0 8px;
+    color:var(--parchment);
+  }
+  .sub{ color:var(--parchment-dim); max-width:620px; font-size:12.5px;}
+
+  main{ padding:32px 48px 80px; max-width:1180px; margin:0 auto; }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--hair);
+    border-radius:3px;
+    padding:24px 28px;
+    margin-bottom:28px;
+  }
+  .panel-title{
+    font-family:var(--display); font-size:16px; font-weight:500;
+    margin:0 0 18px; color:var(--parchment);
+    display:flex; align-items:baseline; gap:10px;
+  }
+  .panel-title .tag{
+    font-family:var(--mono); font-size:10px; color:var(--parchment-dim);
+    border:1px solid var(--hair); padding:2px 6px; border-radius:2px;
+    letter-spacing:0.05em;
+  }
+
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field.full{ grid-column: 1 / -1; }
+  label{ font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--parchment-dim); }
+  input, select{
+    background:var(--ink);
+    border:1px solid var(--hair);
+    color:var(--parchment);
+    font-family:var(--mono);
+    font-size:13px;
+    padding:9px 10px;
+    border-radius:2px;
+    outline:none;
+  }
+  input:focus, select:focus{ border-color:var(--teal); }
+  input::placeholder{ color:#56604f; }
+
+  .row{ display:flex; gap:18px; flex-wrap:wrap; }
+  .row .field{ flex:1; min-width:160px; }
+
+  button.primary{
+    background:var(--teal);
+    color:#0e1410;
+    border:none;
+    font-family:var(--mono);
+    font-weight:600;
+    font-size:12.5px;
+    letter-spacing:0.04em;
+    padding:12px 22px;
+    border-radius:2px;
+    cursor:pointer;
+    margin-top:18px;
+  }
+  button.primary:hover{ background:#8bc2a8; }
+  button.primary:disabled{ background:#3a463d; color:#6c766c; cursor:not-allowed; }
+
+  button.ghost{
+    background:transparent;
+    border:1px solid var(--hair);
+    color:var(--parchment-dim);
+    font-family:var(--mono);
+    font-size:11.5px;
+    padding:9px 16px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  button.ghost:hover{ border-color:var(--teal); color:var(--teal); }
+
+  .log{
+    font-size:11.5px;
+    color:var(--parchment-dim);
+    margin-top:14px;
+    max-height:140px;
+    overflow-y:auto;
+    border-top:1px solid var(--hair);
+    padding-top:12px;
+    display:none;
+  }
+  .log.visible{ display:block; }
+  .log .line{ margin-bottom:4px; }
+  .log .err{ color:var(--rust); }
+  .log .ok{ color:var(--teal); }
+
+  table{ width:100%; border-collapse:collapse; font-size:12px; }
+  th{
+    text-align:left; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--parchment-dim); padding:8px 10px; border-bottom:1px solid var(--hair);
+    position:sticky; top:0; background:var(--panel);
+  }
+  td{ padding:8px 10px; border-bottom:1px solid #20281f; vertical-align:top; }
+  tr:hover td{ background:var(--panel-raised); }
+
+  .pill{
+    display:inline-block; font-size:10px; letter-spacing:0.04em; text-transform:uppercase;
+    padding:2px 8px; border-radius:10px; font-weight:600;
+  }
+  .pill.added{ background:rgba(116,173,148,0.15); color:var(--teal); }
+  .pill.departed{ background:rgba(194,103,75,0.15); color:var(--rust); }
+  .pill.changed{ background:rgba(216,183,91,0.15); color:var(--gold); }
+  .pill.same{ background:rgba(154,163,154,0.1); color:var(--parchment-dim); }
+
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+  .stat{ display:flex; gap:18px; font-size:11.5px; color:var(--parchment-dim); flex-wrap:wrap; }
+  .stat b{ color:var(--parchment); font-family:var(--display); font-size:14px; font-weight:500; }
+
+  .empty{
+    text-align:center; padding:50px 20px; color:var(--parchment-dim);
+  }
+  .empty .glyph{ font-size:28px; color:var(--hair); margin-bottom:10px; }
+
+  .footnote{ font-size:11px; color:var(--parchment-dim); margin-top:10px; line-height:1.6; }
+  .footnote code{ color:var(--gold); }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--hair); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<div class="scanline" id="scanline"></div>
+
+<header>
+  <div class="eyebrow">Wayback Machine · Roster Trace</div>
+  <h1>Team Page Change Tracker</h1>
+  <div class="sub">Pull historical snapshots of a firm's team page from the Internet Archive, extract names and titles from each, and trace who was added, promoted, or departed across the timeline.</div>
+</header>
+
+<main>
+
+  <div class="panel">
+    <div class="panel-title">Source &amp; Range <span class="tag">01</span></div>
+    <div class="grid">
+      <div class="field full">
+        <label>Team page URL</label>
+        <input id="targetUrl" type="text" placeholder="https://www.examplecapital.com/team">
+      </div>
+      <div class="field">
+        <label>From</label>
+        <input id="dateFrom" type="month" value="2023-01">
+      </div>
+      <div class="field">
+        <label>To</label>
+        <input id="dateTo" type="month">
+      </div>
+      <div class="field">
+        <label>Frequency</label>
+        <select id="frequency">
+          <option value="1">Every month</option>
+          <option value="3" selected>Every quarter</option>
+          <option value="6">Every 6 months</option>
+          <option value="12">Every year</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Match tolerance (days either side)</label>
+        <input id="tolerance" type="number" value="20" min="1" max="90">
+      </div>
+    </div>
+    <button class="primary" id="runBtn">Fetch snapshots &amp; build timeline</button>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Roster Changes <span class="tag">02</span></div>
+    <div class="toolbar">
+      <div class="stat" id="statBar"></div>
+      <button class="ghost" id="exportBtn" disabled>Export to Excel ↓</button>
+    </div>
+    <div id="resultsArea">
+      <div class="empty">
+        <div class="glyph">◌</div>
+        Set a URL and date range above, then run a trace.<br>Results will appear here.
+      </div>
+    </div>
+    <div class="footnote">
+      Name/title extraction is heuristic — it looks for Title-Case name lines followed by a recognizable job-title line (e.g. <code>Partner</code>, <code>Managing Director</code>, <code>Principal</code>). Pages with unusual layouts may need manual review. Snapshots that fail to load (CORS or archive gaps) are skipped and logged.
+    </div>
+  </div>
+
+</main>
+
+<script>
+const TITLE_KEYWORDS = ['partner','director','principal','president','chairman','chairwoman','chairperson',
+  'chief','officer','ceo','cfo','coo','cio','cto','managing','founder','co-founder','vice president','vp',
+  'associate','analyst','advisor','adviser','counsel','general counsel','head of','senior','executive',
+  'investment','operating','portfolio','treasurer','secretary','board','member','consultant','fellow'];
+
+function isNameLine(s){
+  if(!s) return false;
+  s = s.trim();
+  if(s.length < 4 || s.length > 45) return false;
+  if(/\d/.test(s)) return false;
+  const words = s.split(/\s+/);
+  if(words.length < 2 || words.length > 4) return false;
+  return words.every(w => /^[A-Z][a-zA-Z.'\-]*$/.test(w) || /^[A-Z]\.$/.test(w));
+}
+function isTitleLine(s){
+  if(!s) return false;
+  s = s.trim();
+  if(s.length < 3 || s.length > 70) return false;
+  const lower = s.toLowerCase();
+  return TITLE_KEYWORDS.some(k => lower.includes(k));
+}
+
+function extractRoster(htmlText){
+  const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+  doc.querySelectorAll('script,style,noscript').forEach(n => n.remove());
+
+  // collect text from leaf-ish elements in document order
+  const lines = [];
+  const walker = doc.createTreeWalker(doc.body || doc, NodeFilter.SHOW_ELEMENT);
+  const seen = new Set();
+  let node;
+  while(node = walker.nextNode()){
+    const hasElementChild = Array.from(node.children).some(c => c.textContent.trim().length > 0);
+    if(hasElementChild) continue;
+    const txt = node.textContent.replace(/\s+/g,' ').trim();
+    if(!txt) continue;
+    if(seen.has(node)) continue;
+    seen.add(node);
+    lines.push(txt);
+  }
+
+  const roster = new Map(); // name -> title
+  for(let i=0; i<lines.length; i++){
+    if(isNameLine(lines[i])){
+      // look ahead a few lines for a title
+      for(let j=i+1; j<Math.min(i+4, lines.length); j++){
+        if(isNameLine(lines[j])) break; // hit next name first, no title found
+        if(isTitleLine(lines[j])){
+          const name = lines[i].trim();
+          if(!roster.has(name)) roster.set(name, lines[j].trim());
+          break;
+        }
+      }
+      if(!roster.has(lines[i].trim())){
+        roster.set(lines[i].trim(), '(title not detected)');
+      }
+    }
+  }
+  return roster;
+}
+
+function monthsBetween(from, to){
+  return (to.getFullYear()-from.getFullYear())*12 + (to.getMonth()-from.getMonth());
+}
+
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+
+function buildTargetDates(fromStr, toStr, freqMonths){
+  const from = new Date(fromStr + '-01T00:00:00');
+  const to = toStr ? new Date(toStr + '-01T00:00:00') : new Date();
+  const total = monthsBetween(from, to);
+  const dates = [];
+  for(let m=0; m<=total; m+=freqMonths){
+    const d = new Date(from.getFullYear(), from.getMonth()+m, 1);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function cdxTimestampToDate(ts){
+  // YYYYMMDDhhmmss
+  return new Date(`${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}T${ts.slice(8,10)||'00'}:${ts.slice(10,12)||'00'}:00Z`);
+}
+
+function logLine(msg, cls){
+  const log = document.getElementById('log');
+  log.classList.add('visible');
+  const div = document.createElement('div');
+  div.className = 'line' + (cls ? ' '+cls : '');
+  div.textContent = msg;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+function clearLog(){
+  const log = document.getElementById('log');
+  log.innerHTML = '';
+  log.classList.remove('visible');
+}
+
+async function describeFetchError(e, urlAttempted){
+  // "Failed to fetch" from the browser gives no further detail by spec (for security/CORS reasons).
+  // Try to narrow down the cause with a couple of cheap follow-up checks.
+  if(location.protocol === 'file:'){
+    return `Network request blocked. This page was opened as a local file (file://), and some browsers refuse to let local files make network requests at all. Try one of: (1) open this file via a local server instead of double-clicking it — e.g. run "npx serve ." in its folder and open the http://localhost link, or (2) drag the file into a new browser tab's address bar after first visiting any https:// page in that tab, or (3) check for a browser flag/extension blocking file:// network access.`;
+  }
+  return `Network request to ${urlAttempted} failed before a response came back. This is almost always one of: an ad blocker / privacy extension blocking archive.org, no internet connection, or a browser CORS policy rejecting the request. Try disabling extensions for this page, or open this file in a different browser, and try again.`;
+}
+
+async function fetchCdx(url, fromStr, toStr){
+  const from = fromStr.replace('-','') + '01';
+  const to = toStr ? toStr.replace('-','') + '28' : '';
+  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&filter=statuscode:200&collapse=timestamp:8&fl=timestamp,original&from=${from}${to ? '&to='+to : ''}`;
+  let res;
+  try{
+    res = await fetch(cdxUrl, { mode: 'cors' });
+  } catch(e){
+    throw new Error(await describeFetchError(e, 'web.archive.org (CDX index)'));
+  }
+  if(!res.ok) throw new Error('CDX query reached the server but returned HTTP ' + res.status + ' — the archive may be rate-limiting or the URL may be malformed.');
+  const data = await res.json();
+  if(!data || data.length < 2) return [];
+  const rows = data.slice(1); // first row is header
+  return rows.map(r => ({ timestamp: r[0], original: r[1], date: cdxTimestampToDate(r[0]) }));
+}
+
+function pickClosestSnapshots(snapshots, targetDates, toleranceDays){
+  const toleranceMs = toleranceDays * 24*60*60*1000;
+  const picked = [];
+  const usedTimestamps = new Set();
+  for(const target of targetDates){
+    let best = null, bestDiff = Infinity;
+    for(const s of snapshots){
+      const diff = Math.abs(s.date - target);
+      if(diff < bestDiff){ bestDiff = diff; best = s; }
+    }
+    if(best && bestDiff <= toleranceMs && !usedTimestamps.has(best.timestamp)){
+      usedTimestamps.add(best.timestamp);
+      picked.push({ target, snapshot: best });
+    } else {
+      picked.push({ target, snapshot: null });
+    }
+  }
+  return picked;
+}
+
+async function fetchSnapshotHtml(timestamp, original){
+  const archUrl = `https://web.archive.org/web/${timestamp}id_/${original}`;
+  let res;
+  try{
+    res = await fetch(archUrl, { mode: 'cors' });
+  } catch(e){
+    throw new Error(await describeFetchError(e, 'web.archive.org (snapshot)'));
+  }
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  return await res.text();
+}
+
+function fmtDate(d){
+  return d.toISOString().slice(0,10);
+}
+
+function diffRosters(prevRoster, currRoster){
+  const events = [];
+  const prevNames = prevRoster ? new Set(prevRoster.keys()) : new Set();
+  const currNames = new Set(currRoster.keys());
+
+  for(const name of currNames){
+    if(!prevRoster){
+      events.push({ name, status: 'baseline', oldTitle: '', newTitle: currRoster.get(name) });
+      continue;
+    }
+    if(!prevNames.has(name)){
+      events.push({ name, status: 'added', oldTitle: '', newTitle: currRoster.get(name) });
+    } else {
+      const oldT = prevRoster.get(name), newT = currRoster.get(name);
+      if(oldT !== newT){
+        events.push({ name, status: 'changed', oldTitle: oldT, newTitle: newT });
+      } else {
+        events.push({ name, status: 'same', oldTitle: oldT, newTitle: newT });
+      }
+    }
+  }
+  if(prevRoster){
+    for(const name of prevNames){
+      if(!currNames.has(name)){
+        events.push({ name, status: 'departed', oldTitle: prevRoster.get(name), newTitle: '' });
+      }
+    }
+  }
+  return events;
+}
+
+let lastExportRows = [];
+
+function renderResults(snapshotResults){
+  const area = document.getElementById('resultsArea');
+  const statBar = document.getElementById('statBar');
+  area.innerHTML = '';
+  lastExportRows = [];
+
+  const valid = snapshotResults.filter(r => r.roster);
+  if(valid.length === 0){
+    area.innerHTML = '<div class="empty"><div class="glyph">⌀</div>No snapshots could be parsed. Check the URL or widen the date range.</div>';
+    return;
+  }
+
+  let totalAdded=0, totalDeparted=0, totalChanged=0;
+
+  valid.forEach((res, idx) => {
+    const prev = idx > 0 ? valid[idx-1].roster : null;
+    const events = diffRosters(prev, res.roster);
+
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Name</th><th>Status</th><th>Previous Title</th><th>Current Title</th></tr>';
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+
+    events.sort((a,b) => {
+      const order = {added:0, changed:1, departed:2, same:3, baseline:0};
+      return (order[a.status]-order[b.status]) || a.name.localeCompare(b.name);
+    });
+
+    events.forEach(ev => {
+      const tr = document.createElement('tr');
+      const pillClass = ev.status === 'baseline' ? 'same' : (ev.status === 'added' ? 'added' : ev.status);
+      const pillLabel = ev.status === 'baseline' ? 'on roster' : ev.status;
+      tr.innerHTML = `<td>${ev.name}</td><td><span class="pill ${pillClass}">${pillLabel}</span></td><td>${ev.oldTitle||'—'}</td><td>${ev.newTitle||'—'}</td>`;
+      tbody.appendChild(tr);
+
+      if(ev.status === 'added') totalAdded++;
+      if(ev.status === 'departed') totalDeparted++;
+      if(ev.status === 'changed') totalChanged++;
+
+      lastExportRows.push({
+        'Snapshot Date': fmtDate(res.date),
+        'Archive URL': `https://web.archive.org/web/${res.timestamp}/${res.original}`,
+        'Name': ev.name,
+        'Status': ev.status === 'baseline' ? 'on roster (baseline)' : ev.status,
+        'Previous Title': ev.oldTitle || '',
+        'Current Title': ev.newTitle || ''
+      });
+    });
+    table.appendChild(tbody);
+
+    const heading = document.createElement('div');
+    heading.style.cssText = 'font-family:var(--display); font-size:14px; margin:22px 0 8px; color:var(--parchment); display:flex; gap:10px; align-items:baseline;';
+    heading.innerHTML = `<span>${fmtDate(res.date)}</span><span style="font-family:var(--mono); font-size:10.5px; color:var(--parchment-dim);">${res.roster.size} people detected ${idx===0 ? '· baseline' : ''}</span>`;
+
+    area.appendChild(heading);
+    area.appendChild(table);
+  });
+
+  statBar.innerHTML = `
+    <span><b>${valid.length}</b> snapshots parsed</span>
+    <span><b style="color:var(--teal)">${totalAdded}</b> additions</span>
+    <span><b style="color:var(--rust)">${totalDeparted}</b> departures</span>
+    <span><b style="color:var(--gold)">${totalChanged}</b> title changes</span>
+  `;
+
+  document.getElementById('exportBtn').disabled = lastExportRows.length === 0;
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if(lastExportRows.length === 0) return;
+  const ws = XLSX.utils.json_to_sheet(lastExportRows);
+  ws['!cols'] = [{wch:13},{wch:46},{wch:24},{wch:18},{wch:26},{wch:26}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Roster Changes');
+  XLSX.writeFile(wb, 'team-roster-changes.xlsx');
+});
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const url = document.getElementById('targetUrl').value.trim();
+  const fromStr = document.getElementById('dateFrom').value;
+  const toStr = document.getElementById('dateTo').value;
+  const freq = parseInt(document.getElementById('frequency').value, 10);
+  const tolerance = parseInt(document.getElementById('tolerance').value, 10) || 20;
+  const btn = document.getElementById('runBtn');
+  const scanline = document.getElementById('scanline');
+
+  if(!url || !/^https?:\/\//i.test(url)){
+    alert('Enter a full team page URL, starting with http:// or https://');
+    return;
+  }
+  if(!fromStr){
+    alert('Set a starting month.');
+    return;
+  }
+
+  clearLog();
+  btn.disabled = true;
+  btn.textContent = 'Tracing…';
+  scanline.classList.add('active');
+  document.getElementById('resultsArea').innerHTML = '<div class="empty"><div class="glyph">◌</div>Querying the archive…</div>';
+  document.getElementById('exportBtn').disabled = true;
+
+  try{
+    logLine(`Querying CDX index for ${url} …`);
+    const snapshots = await fetchCdx(url, fromStr, toStr);
+    if(snapshots.length === 0){
+      logLine('No archived snapshots found for this URL in that range.', 'err');
+      document.getElementById('resultsArea').innerHTML = '<div class="empty"><div class="glyph">⌀</div>No snapshots found. Try a wider date range or confirm the URL was archived.</div>';
+      return;
+    }
+    logLine(`Found ${snapshots.length} candidate snapshots in the index.`, 'ok');
+
+    const targetDates = buildTargetDates(fromStr, toStr, freq);
+    const picks = pickClosestSnapshots(snapshots, targetDates, tolerance);
+
+    const results = [];
+    for(const pick of picks){
+      const label = fmtDate(pick.target);
+      if(!pick.snapshot){
+        logLine(`${label}: no snapshot within ${tolerance} days — skipped.`, 'err');
+        continue;
+      }
+      try{
+        const html = await fetchSnapshotHtml(pick.snapshot.timestamp, pick.snapshot.original);
+        const roster = extractRoster(html);
+        logLine(`${label}: parsed snapshot ${pick.snapshot.timestamp} — ${roster.size} names found.`, 'ok');
+        results.push({ date: pick.snapshot.date, timestamp: pick.snapshot.timestamp, original: pick.snapshot.original, roster });
+      } catch(e){
+        logLine(`${label}: failed to fetch/parse snapshot — ${e.message}`, 'err');
+      }
+    }
+
+    results.sort((a,b) => a.date - b.date);
+    renderResults(results);
+
+  } catch(e){
+    logLine('Error: ' + e.message, 'err');
+    document.getElementById('resultsArea').innerHTML = `<div class="empty"><div class="glyph">⌀</div>Something went wrong: ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Fetch snapshots & build timeline';
+    scanline.classList.remove('active');
+  }
+});
+</script>
+
+</body>
+</html>
