@@ -36,154 +36,59 @@
   }
   .scanline.active{ animation: scan 1.6s linear infinite; opacity:0.7; }
   @keyframes scan{ 0%{top:0;} 100%{top:100%;} }
-
-  header{
-    padding:36px 48px 28px;
-    border-bottom:1px solid var(--hair);
-  }
-  .eyebrow{
-    font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase;
-    color:var(--teal); margin-bottom:10px;
-  }
-  h1{
-    font-family:var(--display);
-    font-optical-sizing:auto;
-    font-weight:500;
-    font-size:32px;
-    margin:0 0 8px;
-    color:var(--parchment);
-  }
+  header{ padding:36px 48px 28px; border-bottom:1px solid var(--hair); }
+  .eyebrow{ font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:var(--teal); margin-bottom:10px; }
+  h1{ font-family:var(--display); font-optical-sizing:auto; font-weight:500; font-size:32px; margin:0 0 8px; color:var(--parchment); }
   .sub{ color:var(--parchment-dim); max-width:620px; font-size:12.5px;}
-
   main{ padding:32px 48px 80px; max-width:1180px; margin:0 auto; }
-
-  .panel{
-    background:var(--panel);
-    border:1px solid var(--hair);
-    border-radius:3px;
-    padding:24px 28px;
-    margin-bottom:28px;
-  }
-  .panel-title{
-    font-family:var(--display); font-size:16px; font-weight:500;
-    margin:0 0 18px; color:var(--parchment);
-    display:flex; align-items:baseline; gap:10px;
-  }
-  .panel-title .tag{
-    font-family:var(--mono); font-size:10px; color:var(--parchment-dim);
-    border:1px solid var(--hair); padding:2px 6px; border-radius:2px;
-    letter-spacing:0.05em;
-  }
-
+  .panel{ background:var(--panel); border:1px solid var(--hair); border-radius:3px; padding:24px 28px; margin-bottom:28px; }
+  .panel-title{ font-family:var(--display); font-size:16px; font-weight:500; margin:0 0 18px; color:var(--parchment); display:flex; align-items:baseline; gap:10px; }
+  .panel-title .tag{ font-family:var(--mono); font-size:10px; color:var(--parchment-dim); border:1px solid var(--hair); padding:2px 6px; border-radius:2px; letter-spacing:0.05em; }
   .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
   .field{ display:flex; flex-direction:column; gap:6px; }
   .field.full{ grid-column: 1 / -1; }
   label{ font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--parchment-dim); }
-  input, select{
-    background:var(--ink);
-    border:1px solid var(--hair);
-    color:var(--parchment);
-    font-family:var(--mono);
-    font-size:13px;
-    padding:9px 10px;
-    border-radius:2px;
-    outline:none;
-  }
+  input, select{ background:var(--ink); border:1px solid var(--hair); color:var(--parchment); font-family:var(--mono); font-size:13px; padding:9px 10px; border-radius:2px; outline:none; }
   input:focus, select:focus{ border-color:var(--teal); }
   input::placeholder{ color:#56604f; }
-
-  .row{ display:flex; gap:18px; flex-wrap:wrap; }
-  .row .field{ flex:1; min-width:160px; }
-
-  button.primary{
-    background:var(--teal);
-    color:#0e1410;
-    border:none;
-    font-family:var(--mono);
-    font-weight:600;
-    font-size:12.5px;
-    letter-spacing:0.04em;
-    padding:12px 22px;
-    border-radius:2px;
-    cursor:pointer;
-    margin-top:18px;
-  }
+  button.primary{ background:var(--teal); color:#0e1410; border:none; font-family:var(--mono); font-weight:600; font-size:12.5px; letter-spacing:0.04em; padding:12px 22px; border-radius:2px; cursor:pointer; margin-top:18px; }
   button.primary:hover{ background:#8bc2a8; }
   button.primary:disabled{ background:#3a463d; color:#6c766c; cursor:not-allowed; }
-
-  button.ghost{
-    background:transparent;
-    border:1px solid var(--hair);
-    color:var(--parchment-dim);
-    font-family:var(--mono);
-    font-size:11.5px;
-    padding:9px 16px;
-    border-radius:2px;
-    cursor:pointer;
-  }
+  button.ghost{ background:transparent; border:1px solid var(--hair); color:var(--parchment-dim); font-family:var(--mono); font-size:11.5px; padding:9px 16px; border-radius:2px; cursor:pointer; }
   button.ghost:hover{ border-color:var(--teal); color:var(--teal); }
-
-  .log{
-    font-size:11.5px;
-    color:var(--parchment-dim);
-    margin-top:14px;
-    max-height:140px;
-    overflow-y:auto;
-    border-top:1px solid var(--hair);
-    padding-top:12px;
-    display:none;
-  }
+  .log{ font-size:11.5px; color:var(--parchment-dim); margin-top:14px; max-height:140px; overflow-y:auto; border-top:1px solid var(--hair); padding-top:12px; display:none; }
   .log.visible{ display:block; }
   .log .line{ margin-bottom:4px; }
   .log .err{ color:var(--rust); }
   .log .ok{ color:var(--teal); }
-
   table{ width:100%; border-collapse:collapse; font-size:12px; }
-  th{
-    text-align:left; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
-    color:var(--parchment-dim); padding:8px 10px; border-bottom:1px solid var(--hair);
-    position:sticky; top:0; background:var(--panel);
-  }
+  th{ text-align:left; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--parchment-dim); padding:8px 10px; border-bottom:1px solid var(--hair); position:sticky; top:0; background:var(--panel); }
   td{ padding:8px 10px; border-bottom:1px solid #20281f; vertical-align:top; }
   tr:hover td{ background:var(--panel-raised); }
-
-  .pill{
-    display:inline-block; font-size:10px; letter-spacing:0.04em; text-transform:uppercase;
-    padding:2px 8px; border-radius:10px; font-weight:600;
-  }
+  .pill{ display:inline-block; font-size:10px; letter-spacing:0.04em; text-transform:uppercase; padding:2px 8px; border-radius:10px; font-weight:600; }
   .pill.added{ background:rgba(116,173,148,0.15); color:var(--teal); }
   .pill.departed{ background:rgba(194,103,75,0.15); color:var(--rust); }
   .pill.changed{ background:rgba(216,183,91,0.15); color:var(--gold); }
   .pill.same{ background:rgba(154,163,154,0.1); color:var(--parchment-dim); }
-
   .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
   .stat{ display:flex; gap:18px; font-size:11.5px; color:var(--parchment-dim); flex-wrap:wrap; }
   .stat b{ color:var(--parchment); font-family:var(--display); font-size:14px; font-weight:500; }
-
-  .empty{
-    text-align:center; padding:50px 20px; color:var(--parchment-dim);
-  }
+  .empty{ text-align:center; padding:50px 20px; color:var(--parchment-dim); }
   .empty .glyph{ font-size:28px; color:var(--hair); margin-bottom:10px; }
-
   .footnote{ font-size:11px; color:var(--parchment-dim); margin-top:10px; line-height:1.6; }
   .footnote code{ color:var(--gold); }
-
   ::-webkit-scrollbar{ width:8px; height:8px; }
   ::-webkit-scrollbar-thumb{ background:var(--hair); border-radius:4px; }
 </style>
 </head>
 <body>
-
 <div class="scanline" id="scanline"></div>
-
 <header>
   <div class="eyebrow">Wayback Machine · Roster Trace</div>
   <h1>Team Page Change Tracker</h1>
   <div class="sub">Pull historical snapshots of a firm's team page from the Internet Archive, extract names and titles from each, and trace who was added, promoted, or departed across the timeline.</div>
 </header>
-
 <main>
-
   <div class="panel">
     <div class="panel-title">Source &amp; Range <span class="tag">01</span></div>
     <div class="grid">
@@ -208,16 +113,11 @@
           <option value="12">Every year</option>
         </select>
       </div>
-      <div class="field">
-        <label>Match tolerance (days either side)</label>
-        <input id="tolerance" type="number" value="20" min="1" max="90">
-      </div>
     </div>
     <button class="primary" id="runBtn">Fetch snapshots &amp; build timeline</button>
     <button class="ghost" id="checkBtn" style="margin-top:18px; margin-left:10px;">Run connectivity check</button>
     <div class="log" id="log"></div>
   </div>
-
   <div class="panel">
     <div class="panel-title">Roster Changes <span class="tag">02</span></div>
     <div class="toolbar">
@@ -231,12 +131,10 @@
       </div>
     </div>
     <div class="footnote">
-      Name/title extraction looks for repeated DOM card structure first (one card per person), validates each candidate group against a real job-title hit rate, then falls back to a flat text heuristic if no consistent card layout is detected. Pages with unusual layouts may need manual review. Snapshots that fail to load (CORS or archive gaps) are skipped and logged.
+      Uses the Wayback Machine Availability API — one lightweight call per target date. Extraction looks for repeated DOM card structure (one card per person) and validates against a real job-title hit rate before accepting a group. Falls back to flat text heuristic if no card layout is detected.
     </div>
   </div>
-
 </main>
-
 <script>
 const TITLE_KEYWORDS = ['partner','director','principal','president','chairman','chairwoman','chairperson',
   'chief','officer','ceo','cfo','coo','cio','cto','managing','founder','co-founder','vice president','vp',
@@ -263,8 +161,7 @@ function isTitleLine(s){
   if(!s) return false;
   s = s.trim();
   if(s.length < 3 || s.length > 70) return false;
-  const lower = s.toLowerCase();
-  return TITLE_KEYWORDS.some(k => lower.includes(k));
+  return TITLE_KEYWORDS.some(k => s.toLowerCase().includes(k));
 }
 
 function isNameLine(s){
@@ -311,10 +208,8 @@ function isJunkTitleLine(s){
 
 function detectCardGroups(doc){
   const root = doc.body || doc;
-  const all = root.querySelectorAll('*');
   const parentMap = new Map();
-
-  all.forEach(el => {
+  root.querySelectorAll('*').forEach(el => {
     if(typeof el.className !== 'string') return;
     const cls = el.className.trim();
     if(!cls) return;
@@ -326,22 +221,16 @@ function detectCardGroups(doc){
     if(!sigMap.has(sig)) sigMap.set(sig, []);
     sigMap.get(sig).push(el);
   });
-
   const groups = [];
   parentMap.forEach(sigMap => {
-    sigMap.forEach(elements => {
-      if(elements.length >= 3 && elements.length <= 250){
-        groups.push(elements);
-      }
-    });
+    sigMap.forEach(els => { if(els.length >= 3 && els.length <= 250) groups.push(els); });
   });
   return groups;
 }
 
 function extractFromCardGroup(elements){
   const roster = new Map();
-  let hitCount = 0;
-  let recognizedTitleHits = 0;
+  let hitCount = 0, recognizedTitleHits = 0;
   elements.forEach(card => {
     const lines = extractLines(card);
     let name = null, title = null;
@@ -350,10 +239,7 @@ function extractFromCardGroup(elements){
         name = lines[i].trim();
         for(let j=i+1; j<lines.length; j++){
           if(isNameLine(lines[j])) break;
-          if(!isJunkTitleLine(lines[j])){
-            title = lines[j].trim().replace(/,\s*$/, '');
-            break;
-          }
+          if(!isJunkTitleLine(lines[j])){ title = lines[j].trim().replace(/,\s*$/,''); break; }
         }
         break;
       }
@@ -377,15 +263,9 @@ function extractRosterFlatFallback(doc){
       let foundTitle = null;
       for(let j=i+1; j<Math.min(i+3, lines.length); j++){
         if(isNameLine(lines[j])) break;
-        if(isTitleLine(lines[j])){
-          foundTitle = lines[j].trim();
-          break;
-        }
+        if(isTitleLine(lines[j])){ foundTitle = lines[j].trim(); break; }
       }
-      if(foundTitle){
-        const name = lines[i].trim();
-        if(!roster.has(name)) roster.set(name, foundTitle);
-      }
+      if(foundTitle && !roster.has(lines[i].trim())) roster.set(lines[i].trim(), foundTitle);
     }
   }
   return roster;
@@ -395,26 +275,18 @@ function extractRoster(htmlText){
   const doc = new DOMParser().parseFromString(htmlText, 'text/html');
   doc.querySelectorAll('script,style,noscript').forEach(n => n.remove());
   doc.querySelectorAll(NAV_ANCESTOR_SELECTOR).forEach(n => n.remove());
-
   const cardGroups = detectCardGroups(doc);
   cardGroups.sort((a,b) => b.length - a.length);
-
   const merged = new Map();
   for(const group of cardGroups){
-    const found = extractFromCardGroup(group);
-    found.forEach((title, name) => { if(!merged.has(name)) merged.set(name, title); });
+    extractFromCardGroup(group).forEach((title, name) => { if(!merged.has(name)) merged.set(name, title); });
   }
-
-  if(merged.size > 0) return merged;
-
-  return extractRosterFlatFallback(doc);
+  return merged.size > 0 ? merged : extractRosterFlatFallback(doc);
 }
 
 function monthsBetween(from, to){
   return (to.getFullYear()-from.getFullYear())*12 + (to.getMonth()-from.getMonth());
 }
-
-function pad(n){ return n<10 ? '0'+n : ''+n; }
 
 function buildTargetDates(fromStr, toStr, freqMonths){
   const from = new Date(fromStr + '-01T00:00:00');
@@ -422,8 +294,7 @@ function buildTargetDates(fromStr, toStr, freqMonths){
   const total = monthsBetween(from, to);
   const dates = [];
   for(let m=0; m<=total; m+=freqMonths){
-    const d = new Date(from.getFullYear(), from.getMonth()+m, 1);
-    dates.push(d);
+    dates.push(new Date(from.getFullYear(), from.getMonth()+m, 1));
   }
   return dates;
 }
@@ -431,6 +302,8 @@ function buildTargetDates(fromStr, toStr, freqMonths){
 function cdxTimestampToDate(ts){
   return new Date(`${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}T${ts.slice(8,10)||'00'}:${ts.slice(10,12)||'00'}:00Z`);
 }
+
+function fmtDate(d){ return d.toISOString().slice(0,10); }
 
 function logLine(msg, cls){
   const log = document.getElementById('log');
@@ -449,136 +322,91 @@ function clearLog(){
 
 const CORS_PROXIES = [
   { label: 'allorigins.win', build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
-  { label: 'corsproxy.io', build: url => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
-  { label: 'thingproxy', build: url => `https://thingproxy.freeboard.io/fetch/${url}` },
+  { label: 'corsproxy.io',   build: url => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
+  { label: 'thingproxy',     build: url => `https://thingproxy.freeboard.io/fetch/${url}` },
 ];
 
 function fetchWithTimeout(url, ms){
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), ms);
-  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(t));
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
 }
 
 async function fetchWithCorsFallback(url, onAttempt){
   const attempts = [];
-
-  try{
-    const res = await fetchWithTimeout(url, 12000);
-    attempts.push({ label: 'direct', status: res.status, ok: res.ok });
-    if(onAttempt) onAttempt(attempts[attempts.length-1]);
-    if(res.ok) return res;
-  } catch(e){
-    attempts.push({ label: 'direct', error: e.message });
-    if(onAttempt) onAttempt(attempts[attempts.length-1]);
-  }
-
-  for(const proxy of CORS_PROXIES){
+  const try_ = async (label, fetchFn) => {
     try{
-      const res = await fetchWithTimeout(proxy.build(url), 15000);
-      attempts.push({ label: proxy.label, status: res.status, ok: res.ok });
+      const res = await fetchFn();
+      attempts.push({ label, status: res.status, ok: res.ok });
       if(onAttempt) onAttempt(attempts[attempts.length-1]);
       if(res.ok) return res;
     } catch(e){
-      attempts.push({ label: proxy.label, error: e.message });
+      attempts.push({ label, error: e.message });
       if(onAttempt) onAttempt(attempts[attempts.length-1]);
     }
-  }
+    return null;
+  };
 
+  let res = await try_('direct', () => fetchWithTimeout(url, 15000));
+  if(res) return res;
+  for(const proxy of CORS_PROXIES){
+    res = await try_(proxy.label, () => fetchWithTimeout(proxy.build(url), 20000));
+    if(res) return res;
+  }
   const summary = attempts.map(a => a.error ? `${a.label}: ${a.error}` : `${a.label}: HTTP ${a.status}`).join(' | ');
   throw new Error(`Every route failed — ${summary}`);
 }
 
 async function runConnectivityCheck(){
-  const probeUrl = 'https://web.archive.org/cdx/search/cdx?url=example.com&limit=1&output=json';
-  logLine('Running connectivity check…');
+  const probeUrl = 'https://archive.org/wayback/available?url=example.com&timestamp=20230101';
+  logLine('Running connectivity check (Wayback Availability API)…');
   try{
     await fetchWithCorsFallback(probeUrl, (a) => {
-      if(a.error) logLine(`${a.label}: blocked — ${a.error}`, 'err');
-      else logLine(`${a.label}: HTTP ${a.status}${a.ok ? ' (success)' : ''}`, a.ok ? 'ok' : 'err');
+      if(a.error) logLine(`  ${a.label}: blocked — ${a.error}`, 'err');
+      else logLine(`  ${a.label}: HTTP ${a.status}${a.ok ? ' ✓' : ''}`, a.ok ? 'ok' : 'err');
     });
-    logLine('At least one route works — the tracker should run.', 'ok');
+    logLine('At least one route works — ready to trace.', 'ok');
   } catch(e){
     logLine(e.message, 'err');
-  }
-  try{
-    const res = await fetchWithTimeout('https://httpbin.org/get', 8000);
-    logLine(`unrelated public API (httpbin): HTTP ${res.status}`, res.ok ? 'ok' : 'err');
-  } catch(e){
-    logLine(`unrelated public API (httpbin): blocked — ${e.message}`, 'err');
   }
   logLine('Connectivity check complete.');
 }
 
-async function fetchCdx(url, fromStr, toStr){
-  const from = fromStr.replace('-','') + '01';
-  const to = toStr ? toStr.replace('-','') + '28' : '';
-  const cdxUrl = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&filter=statuscode:200&collapse=timestamp:8&fl=timestamp,original&limit=2000&from=${from}${to ? '&to='+to : ''}`;
-  const res = await fetchWithCorsFallback(cdxUrl, (a) => {
-    if(a.error) logLine(`  CDX via ${a.label}: ${a.error}`, 'err');
-    else logLine(`  CDX via ${a.label}: HTTP ${a.status}`, a.ok ? 'ok' : 'err');
-  });
+async function fetchClosestSnapshot(pageUrl, targetDate){
+  const ts = targetDate.getFullYear().toString()
+    + String(targetDate.getMonth()+1).padStart(2,'0')
+    + String(targetDate.getDate()).padStart(2,'0');
+  const apiUrl = `https://archive.org/wayback/available?url=${encodeURIComponent(pageUrl)}&timestamp=${ts}`;
+  const res = await fetchWithCorsFallback(apiUrl);
   const data = await res.json();
-  if(!data || data.length < 2) return [];
-  const rows = data.slice(1);
-  return rows.map(r => ({ timestamp: r[0], original: r[1], date: cdxTimestampToDate(r[0]) }));
+  const snap = data?.archived_snapshots?.closest;
+  if(!snap || snap.available !== true) return null;
+  const m = snap.url.match(/\/web\/(\d{14})\//);
+  if(!m) return null;
+  return { timestamp: m[1], date: cdxTimestampToDate(m[1]), archiveUrl: snap.url };
 }
 
-function pickClosestSnapshots(snapshots, targetDates, toleranceDays){
-  const toleranceMs = toleranceDays * 24*60*60*1000;
-  const picked = [];
-  const usedTimestamps = new Set();
-  for(const target of targetDates){
-    let best = null, bestDiff = Infinity;
-    for(const s of snapshots){
-      const diff = Math.abs(s.date - target);
-      if(diff < bestDiff){ bestDiff = diff; best = s; }
-    }
-    if(best && bestDiff <= toleranceMs && !usedTimestamps.has(best.timestamp)){
-      usedTimestamps.add(best.timestamp);
-      picked.push({ target, snapshot: best });
-    } else {
-      picked.push({ target, snapshot: null });
-    }
-  }
-  return picked;
-}
-
-async function fetchSnapshotHtml(timestamp, original){
-  const archUrl = `https://web.archive.org/web/${timestamp}id_/${original}`;
-  const res = await fetchWithCorsFallback(archUrl);
+async function fetchSnapshotHtml(archiveUrl){
+  const rawUrl = archiveUrl.replace(/\/web\/(\d+)\//, '/web/$1id_/');
+  const res = await fetchWithCorsFallback(rawUrl);
   return await res.text();
-}
-
-function fmtDate(d){
-  return d.toISOString().slice(0,10);
 }
 
 function diffRosters(prevRoster, currRoster){
   const events = [];
   const prevNames = prevRoster ? new Set(prevRoster.keys()) : new Set();
   const currNames = new Set(currRoster.keys());
-
   for(const name of currNames){
-    if(!prevRoster){
-      events.push({ name, status: 'baseline', oldTitle: '', newTitle: currRoster.get(name) });
-      continue;
-    }
-    if(!prevNames.has(name)){
-      events.push({ name, status: 'added', oldTitle: '', newTitle: currRoster.get(name) });
-    } else {
+    if(!prevRoster){ events.push({ name, status:'baseline', oldTitle:'', newTitle: currRoster.get(name) }); continue; }
+    if(!prevNames.has(name)){ events.push({ name, status:'added', oldTitle:'', newTitle: currRoster.get(name) }); }
+    else {
       const oldT = prevRoster.get(name), newT = currRoster.get(name);
-      if(oldT !== newT){
-        events.push({ name, status: 'changed', oldTitle: oldT, newTitle: newT });
-      } else {
-        events.push({ name, status: 'same', oldTitle: oldT, newTitle: newT });
-      }
+      events.push({ name, status: oldT!==newT ? 'changed' : 'same', oldTitle: oldT, newTitle: newT });
     }
   }
   if(prevRoster){
     for(const name of prevNames){
-      if(!currNames.has(name)){
-        events.push({ name, status: 'departed', oldTitle: prevRoster.get(name), newTitle: '' });
-      }
+      if(!currNames.has(name)) events.push({ name, status:'departed', oldTitle: prevRoster.get(name), newTitle:'' });
     }
   }
   return events;
@@ -591,72 +419,59 @@ function renderResults(snapshotResults){
   const statBar = document.getElementById('statBar');
   area.innerHTML = '';
   lastExportRows = [];
-
   const valid = snapshotResults.filter(r => r.roster);
   if(valid.length === 0){
-    area.innerHTML = '<div class="empty"><div class="glyph">⌀</div>No snapshots could be parsed. Check the URL or widen the date range.</div>';
+    area.innerHTML = '<div class="empty"><div class="glyph">⌀</div>No snapshots could be parsed.</div>';
     return;
   }
-
   let totalAdded=0, totalDeparted=0, totalChanged=0;
-
   valid.forEach((res, idx) => {
     const prev = idx > 0 ? valid[idx-1].roster : null;
     const events = diffRosters(prev, res.roster);
-
+    events.sort((a,b) => {
+      const order = {added:0,changed:1,departed:2,same:3,baseline:0};
+      return (order[a.status]-order[b.status]) || a.name.localeCompare(b.name);
+    });
     const table = document.createElement('table');
     const thead = document.createElement('thead');
     thead.innerHTML = '<tr><th>Name</th><th>Status</th><th>Previous Title</th><th>Current Title</th></tr>';
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
-
-    events.sort((a,b) => {
-      const order = {added:0, changed:1, departed:2, same:3, baseline:0};
-      return (order[a.status]-order[b.status]) || a.name.localeCompare(b.name);
-    });
-
     events.forEach(ev => {
       const tr = document.createElement('tr');
-      const pillClass = ev.status === 'baseline' ? 'same' : (ev.status === 'added' ? 'added' : ev.status);
-      const pillLabel = ev.status === 'baseline' ? 'on roster' : ev.status;
+      const pillClass = ev.status==='baseline' ? 'same' : ev.status;
+      const pillLabel = ev.status==='baseline' ? 'on roster' : ev.status;
       tr.innerHTML = `<td>${ev.name}</td><td><span class="pill ${pillClass}">${pillLabel}</span></td><td>${ev.oldTitle||'—'}</td><td>${ev.newTitle||'—'}</td>`;
       tbody.appendChild(tr);
-
-      if(ev.status === 'added') totalAdded++;
-      if(ev.status === 'departed') totalDeparted++;
-      if(ev.status === 'changed') totalChanged++;
-
+      if(ev.status==='added') totalAdded++;
+      if(ev.status==='departed') totalDeparted++;
+      if(ev.status==='changed') totalChanged++;
       lastExportRows.push({
         'Snapshot Date': fmtDate(res.date),
-        'Archive URL': `https://web.archive.org/web/${res.timestamp}/${res.original}`,
+        'Archive URL': res.archiveUrl || '',
         'Name': ev.name,
-        'Status': ev.status === 'baseline' ? 'on roster (baseline)' : ev.status,
-        'Previous Title': ev.oldTitle || '',
-        'Current Title': ev.newTitle || ''
+        'Status': ev.status==='baseline' ? 'on roster (baseline)' : ev.status,
+        'Previous Title': ev.oldTitle||'',
+        'Current Title': ev.newTitle||''
       });
     });
     table.appendChild(tbody);
-
     const heading = document.createElement('div');
-    heading.style.cssText = 'font-family:var(--display); font-size:14px; margin:22px 0 8px; color:var(--parchment); display:flex; gap:10px; align-items:baseline;';
-    heading.innerHTML = `<span>${fmtDate(res.date)}</span><span style="font-family:var(--mono); font-size:10.5px; color:var(--parchment-dim);">${res.roster.size} people detected ${idx===0 ? '· baseline' : ''}</span>`;
-
+    heading.style.cssText = 'font-family:var(--display);font-size:14px;margin:22px 0 8px;color:var(--parchment);display:flex;gap:10px;align-items:baseline;';
+    heading.innerHTML = `<span>${fmtDate(res.date)}</span><span style="font-family:var(--mono);font-size:10.5px;color:var(--parchment-dim);">${res.roster.size} people detected${idx===0?' · baseline':''}</span>`;
     area.appendChild(heading);
     area.appendChild(table);
   });
-
   statBar.innerHTML = `
     <span><b>${valid.length}</b> snapshots parsed</span>
     <span><b style="color:var(--teal)">${totalAdded}</b> additions</span>
     <span><b style="color:var(--rust)">${totalDeparted}</b> departures</span>
-    <span><b style="color:var(--gold)">${totalChanged}</b> title changes</span>
-  `;
-
+    <span><b style="color:var(--gold)">${totalChanged}</b> title changes</span>`;
   document.getElementById('exportBtn').disabled = lastExportRows.length === 0;
 }
 
 document.getElementById('exportBtn').addEventListener('click', () => {
-  if(lastExportRows.length === 0) return;
+  if(!lastExportRows.length) return;
   const ws = XLSX.utils.json_to_sheet(lastExportRows);
   ws['!cols'] = [{wch:13},{wch:46},{wch:24},{wch:18},{wch:26},{wch:26}];
   const wb = XLSX.utils.book_new();
@@ -674,18 +489,11 @@ document.getElementById('runBtn').addEventListener('click', async () => {
   const fromStr = document.getElementById('dateFrom').value;
   const toStr = document.getElementById('dateTo').value;
   const freq = parseInt(document.getElementById('frequency').value, 10);
-  const tolerance = parseInt(document.getElementById('tolerance').value, 10) || 20;
   const btn = document.getElementById('runBtn');
   const scanline = document.getElementById('scanline');
 
-  if(!url || !/^https?:\/\//i.test(url)){
-    alert('Enter a full team page URL, starting with http:// or https://');
-    return;
-  }
-  if(!fromStr){
-    alert('Set a starting month.');
-    return;
-  }
+  if(!url || !/^https?:\/\//i.test(url)){ alert('Enter a full URL starting with http:// or https://'); return; }
+  if(!fromStr){ alert('Set a starting month.'); return; }
 
   clearLog();
   btn.disabled = true;
@@ -695,38 +503,28 @@ document.getElementById('runBtn').addEventListener('click', async () => {
   document.getElementById('exportBtn').disabled = true;
 
   try{
-    logLine(`Querying CDX index for ${url} …`);
-    const snapshots = await fetchCdx(url, fromStr, toStr);
-    if(snapshots.length === 0){
-      logLine('No archived snapshots found for this URL in that range.', 'err');
-      document.getElementById('resultsArea').innerHTML = '<div class="empty"><div class="glyph">⌀</div>No snapshots found. Try a wider date range or confirm the URL was archived.</div>';
+    const targetDates = buildTargetDates(fromStr, toStr, freq);
+    logLine(`Looking up ${targetDates.length} snapshots via Wayback Availability API…`);
+    const results = [];
+    for(const target of targetDates){
+      const label = fmtDate(target);
+      try{
+        const snap = await fetchClosestSnapshot(url, target);
+        if(!snap){ logLine(`${label}: no snapshot found — skipped.`, 'err'); continue; }
+        const html = await fetchSnapshotHtml(snap.archiveUrl);
+        const roster = extractRoster(html);
+        logLine(`${label}: snapshot ${snap.timestamp} — ${roster.size} people found.`, 'ok');
+        results.push({ date: snap.date, timestamp: snap.timestamp, archiveUrl: snap.archiveUrl, roster });
+      } catch(e){
+        logLine(`${label}: failed — ${e.message}`, 'err');
+      }
+    }
+    if(results.length === 0){
+      document.getElementById('resultsArea').innerHTML = '<div class="empty"><div class="glyph">⌀</div>No snapshots could be loaded. Confirm the URL is archived on the Wayback Machine.</div>';
       return;
     }
-    logLine(`Found ${snapshots.length} candidate snapshots in the index.`, 'ok');
-
-    const targetDates = buildTargetDates(fromStr, toStr, freq);
-    const picks = pickClosestSnapshots(snapshots, targetDates, tolerance);
-
-    const results = [];
-    for(const pick of picks){
-      const label = fmtDate(pick.target);
-      if(!pick.snapshot){
-        logLine(`${label}: no snapshot within ${tolerance} days — skipped.`, 'err');
-        continue;
-      }
-      try{
-        const html = await fetchSnapshotHtml(pick.snapshot.timestamp, pick.snapshot.original);
-        const roster = extractRoster(html);
-        logLine(`${label}: parsed snapshot ${pick.snapshot.timestamp} — ${roster.size} names found.`, 'ok');
-        results.push({ date: pick.snapshot.date, timestamp: pick.snapshot.timestamp, original: pick.snapshot.original, roster });
-      } catch(e){
-        logLine(`${label}: failed to fetch/parse snapshot — ${e.message}`, 'err');
-      }
-    }
-
     results.sort((a,b) => a.date - b.date);
     renderResults(results);
-
   } catch(e){
     logLine('Error: ' + e.message, 'err');
     document.getElementById('resultsArea').innerHTML = `<div class="empty"><div class="glyph">⌀</div>Something went wrong: ${e.message}</div>`;
@@ -737,6 +535,5 @@ document.getElementById('runBtn').addEventListener('click', async () => {
   }
 });
 </script>
-
 </body>
 </html>
